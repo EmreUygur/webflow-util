@@ -1,1 +1,3 @@
+(() => {
+})();
 //# sourceMappingURL=IDeckNavigation.js.map
