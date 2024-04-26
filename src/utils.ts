@@ -671,4 +671,16 @@ export function shuffleArray(array: any[]) {
 }
 
 
+export function encodeDataBTOA(str: string) {
+    const encoder = new TextEncoder();
+    // 1: split the UTF-16 string into an array of bytes
+    const charCodes = encoder.encode(str);
+    // 2: concatenate byte data to create a binary string
+    return btoa(String.fromCharCode(...charCodes));
+}
+  
+export function encodedDataATOB (str: string) {
+    return decodeURIComponent(escape(atob(str)))
+}
+
 

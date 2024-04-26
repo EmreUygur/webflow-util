@@ -9,7 +9,7 @@
  */
 
 import { XXH64 } from './webflow-crypto';
-import { toTitleCase, getCookie } from './utils';
+import { toTitleCase, getCookie, encodedDataATOB, encodeDataBTOA } from './utils';
 
 import { Sa5Core } from './webflow-core';
 import { Sa5Debug } from './webflow-core/debug';
@@ -202,7 +202,7 @@ export class Sa5UserAccounts {
                 let emailInput = form.querySelector("#wf-log-in-email") as HTMLInputElement;
                 let userEmail = emailInput.value;
 
-                let userKey = btoa(userEmail);
+                let userKey = encodeDataBTOA(userEmail);
                 localStorage.setItem('StorageKeys.userKey', userKey); 
             });
         });
@@ -316,7 +316,7 @@ export class Sa5UserAccounts {
         // Get cached version if possible
         const userKeyEncoded = localStorage.getItem(StorageKeys.userKey);
         if (userKeyEncoded) {
-            return atob(userKeyEncoded);
+            return encodedDataATOB(userKeyEncoded);
         }
 
     }
@@ -719,7 +719,7 @@ export class Sa5UserAccounts {
         this.debug.debug("merged", userData); // Merged 
 
         sessionStorage.setItem(StorageKeys.user,
-            btoa(JSON.stringify(userData)) // , jsonMapReplacer))
+            encodeDataBTOA(JSON.stringify(userData)) // , jsonMapReplacer))
             ); 
 
         // Databinding
@@ -772,7 +772,7 @@ export class Sa5UserAccounts {
         // De-serialize User 
         const user = new Sa5User();
         user.fromJSON(
-           JSON.parse(atob(userInfo)) //, jsonMapReviver)
+           JSON.parse(encodedDataATOB(userInfo)) //, jsonMapReviver)
         );
 
         this.debug.groupEnd();
