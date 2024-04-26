@@ -1,115 +1,95 @@
-
 /*
- * webflow-cache 
- * Cache Utilities 
- * 
+ * webflow-cache
+ * Cache Utilities
+ *
  * Sygnal Technology Group
  * http://sygnal.com
- * 
- * Cache Utilities 
+ *
+ * Cache Utilities
  * An advanced utility for retriving and caching values online, for maximum performance.
  */
 
-import { Sa5CacheItemTyped } from './webflow-cache/cache-item-typed';
-import { Sa5CacheItem } from './webflow-cache/cache-item';
-import { Sa5Core } from './webflow-core'
+import { Sa5CacheItemTyped } from "./webflow-cache/cache-item-typed";
+import { Sa5CacheItem } from "./webflow-cache/cache-item";
+import { Sa5Core } from "./webflow-core";
 
-import { Sa5Debug } from './webflow-core/debug';
-
+import { Sa5Debug } from "./webflow-core/debug";
 
 //#region WfuCacheItem
 
 export enum Sa5CacheStorageType {
-
-    sessionStorage,
-    localStorage,
-    cookies
-
+  sessionStorage,
+  localStorage,
+  cookies,
 }
-
 
 interface Sa5CacheConfig {
+  id: string; // Cache instance identifier
+  cacheKey: string; // Cache validation key
+  // Future: expand into cacheUserKey (app) and a remote key indicating remote source changes
+  // problem is that might need to be by item
 
-    id: string, // Cache instance identifier
-    cacheKey: string, // Cache validation key 
-// Future: expand into cacheUserKey (app) and a remote key indicating remote source changes
-// problem is that might need to be by item 
+  //    store: Sa5CacheStorageType;
+  prefix: string;
+  //    val: {}; // as any { [key: string]: Sa5CacheItemBase };
 
-//    store: Sa5CacheStorageType;
-    prefix: string; 
-//    val: {}; // as any { [key: string]: Sa5CacheItemBase };
-
-    debug: boolean;
-
+  debug: boolean;
 }
-
 
 var defaultConfig: Sa5CacheConfig = {
+  id: "cache",
+  cacheKey: null,
 
-    id: 'cache',
-    cacheKey: null, 
+  // sessionStorage | localStorage | cookies
+  //    store: Sa5CacheStorageType.sessionStorage, // 'sessionStorage', // ONLY supported
+  prefix: "cache",
+  //    val: {}, // Cached values
+  //    val: {}, // as { [key: string]: Sa5CacheItemBase },
 
-    // sessionStorage | localStorage | cookies
-//    store: Sa5CacheStorageType.sessionStorage, // 'sessionStorage', // ONLY supported 
-    prefix: 'cache', 
-//    val: {}, // Cached values  
-//    val: {}, // as { [key: string]: Sa5CacheItemBase },
-    
-    debug: false, // Debugging mode
-  
-}
-
+  debug: false, // Debugging mode
+};
 
 // Controller
 export class Sa5CacheController {
+  private items = new Map<string, Sa5CacheItemTyped<any>>();
 
-    private items = new Map<string, Sa5CacheItemTyped<any>>();
+  //    console = new WfuDebug("wfu-cache");
 
+  config: Sa5CacheConfig; // Optional config
+  debug: Sa5Debug;
 
-//    console = new WfuDebug("wfu-cache");
+  constructor(customConfig = {}) {
+    //        this.config = $.extend({}, defaultWfuCacheConfig, config);
+    this.config = { ...defaultConfig, ...customConfig };
 
-    config: Sa5CacheConfig; // Optional config
-    debug: Sa5Debug; 
- 
-    constructor(customConfig = {}) {
+    // Enable debugging, if specified
+    this.debug = new Sa5Debug("sa5-cache");
+    this.debug.enabled = this.config.debug;
 
-        //        this.config = $.extend({}, defaultWfuCacheConfig, config);
-        this.config = { ...defaultConfig, ...customConfig };
-
-        // Enable debugging, if specified
-        this.debug = new Sa5Debug("sa5-cache");
-        this.debug.enabled = this.config.debug; 
-
-        // Verify cache is valid, if existing
-        // clear if not 
-        if(this.config.cacheKey) {
-
-        }
-
+    // Verify cache is valid, if existing
+    // clear if not
+    if (this.config.cacheKey) {
     }
+  }
 
-    cacheItemKey = function(itemName) {
+  cacheItemKey = function (itemName) {
+    //        const CACHE_PREFIX = 'sa5-cache';
 
-//        const CACHE_PREFIX = 'sa5-cache';
+    return `${this.config.prefix}_${itemName}`;
+  };
 
-        return `${this.config.prefix}_${itemName}`;
-    }
+  addItem(name: string, item: Sa5CacheItemTyped<any>) {
+    // Reference to controller
+    // supports cacheKey
+    item.controller = this;
 
+    this.items.set(name, item);
+  }
 
-    addItem(name: string, item: Sa5CacheItemTyped<any>) {
-
-        // Reference to controller
-        // supports cacheKey 
-        item.controller = this;
-
-        this.items.set(name, item);
-    }
-
-    getItem<T>(name: string): Sa5CacheItemTyped<T> | undefined {
-
-        return this.items.get(name) as Sa5CacheItemTyped<T> | undefined;
-    }
-/*
+  getItem<T>(name: string): Sa5CacheItemTyped<T> | undefined {
+    return this.items.get(name) as Sa5CacheItemTyped<T> | undefined;
+  }
+  /*
     async getAsync(itemName): Promise<string> {
 
         this.debug.group(`getAsync - "${itemName}"`);
@@ -166,21 +146,15 @@ export class Sa5CacheController {
         return returnValue; 
     }
 */
-    clearCache() {
-        // Iterate through items and clear() 
-    }
-
+  clearCache() {
+    // Iterate through items and clear()
+  }
 }
 
 //#endregion
-
 
 // Register
 Sa5Core.startup(Sa5CacheController);
 
 // window["sa5"] = window["sa5"] || []; // {};
 // window["sa5"]["Sa5Cache"] = Sa5Cache;
-
-
-
-
