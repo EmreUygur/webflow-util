@@ -1,261 +1,616 @@
-(() => {
-  // src/utils.ts
-  function identifyElement(element) {
+"use strict";
+/*
+ * webflow-utils
+ *
+ * Sygnal Technology Group
+ * http://sygnal.com
+ *
+ * General Utilities
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.encodedDataATOB = exports.encodeDataBTOA = exports.shuffleArray = exports.sequence = exports.expandMacrosInText = exports.expandMacrosInElement = exports.displayDataAsHtml = exports.formatJsonAsHtml = exports.formatJson = exports.applyDynamicAttributes = exports.autosizeIFrames = exports.shuffleElements = exports.executeFunctionByName2 = exports.executeFunctionByName = exports.isMobile = exports.outerHTML = exports.between = exports.encodeHTML = exports.decodeHTML = exports.jsonMapReviver = exports.jsonMapReplacer = exports.toTitleCase = exports.getCookie = exports.addDays = exports.booleanValue = exports.selectOptionByValue = exports.identifyElement = void 0;
+// https://stackoverflow.com/questions/196972/convert-string-to-title-case-with-javascript
+// https://www.w3docs.com/snippets/javascript/how-to-convert-string-to-title-case-with-javascript.html
+function identifyElement(element) {
     switch (element.tagName) {
-      case "A":
-        return "HTMLLinkElement";
-      case "INPUT": {
-        const inputElement = element;
-        switch (inputElement.type) {
-          case "checkbox":
-            return "HTMLCheckboxElement";
-          case "radio":
-            return "HTMLRadioElement";
-          case "file":
-            return "HTMLFileInputElement";
-          default:
-            return "HTMLInputElement";
+        case "A":
+            return "HTMLLinkElement";
+        case "INPUT": {
+            const inputElement = element;
+            switch (inputElement.type) {
+                // BUG: add date types and number types
+                case "checkbox":
+                    return "HTMLCheckboxElement";
+                case "radio":
+                    return "HTMLRadioElement";
+                // case 'text':
+                //     return 'HTMLTextElement';
+                // case 'password':
+                //     return 'HTMLPasswordElement';
+                case "file":
+                    return "HTMLFileInputElement";
+                default:
+                    return "HTMLInputElement";
+            }
         }
-      }
-      case "SELECT":
-        return "HTMLSelectElement";
-      case "TEXTAREA":
-        return "HTMLTextAreaElement";
-      case "BUTTON":
-        return "HTMLButtonElement";
-      default:
-        return "HTMLElement";
+        case "SELECT":
+            return "HTMLSelectElement";
+        case "TEXTAREA":
+            return "HTMLTextAreaElement";
+        case "BUTTON":
+            return "HTMLButtonElement";
+        default:
+            return "HTMLElement";
     }
-  }
-  function selectOptionByValue(selectElement, value) {
+}
+exports.identifyElement = identifyElement;
+function selectOptionByValue(selectElement, value) {
     for (let i = 0; i < selectElement.options.length; i++) {
-      if (selectElement.options[i].value === value) {
-        selectElement.options[i].selected = true;
-        break;
-      }
+        if (selectElement.options[i].value === value) {
+            selectElement.options[i].selected = true;
+            break;
+        }
     }
-  }
-  function booleanValue(val) {
+}
+exports.selectOptionByValue = selectOptionByValue;
+// Evaluates a string value as boolean
+function booleanValue(val) {
     switch (val.toLowerCase()) {
-      case "false":
-      case "f":
-      case "0":
-      case "no":
-      case "off":
-      case void 0:
-      case "undefined":
-      case null:
-      case "null":
-        return false;
-      default:
-        return true;
+        case "false":
+        case "f":
+        case "0":
+        case "no":
+        case "off":
+        case undefined:
+        case "undefined":
+        case null:
+        case "null":
+            return false;
+        default:
+            return true;
     }
-  }
-  function addDays(date, days) {
+}
+exports.booleanValue = booleanValue;
+function addDays(date, days) {
     let result = new Date(date);
     result.setDate(result.getDate() + days);
     return result;
-  }
-  function getCookie(name) {
+}
+exports.addDays = addDays;
+function getCookie(name) {
     var match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
     if (match)
-      return match[2];
-  }
-  function toTitleCase(str) {
-    return str.toLowerCase().split(" ").map(function(word) {
-      return word.charAt(0).toUpperCase() + word.slice(1);
-    }).join(" ");
-  }
-  function jsonMapReplacer(key, value) {
+        return match[2];
+}
+exports.getCookie = getCookie;
+function toTitleCase(str) {
+    return str
+        .toLowerCase()
+        .split(" ")
+        .map(function (word) {
+        return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+        .join(" ");
+}
+exports.toTitleCase = toTitleCase;
+// How do you JSON.stringify an ES6 Map?
+// https://stackoverflow.com/a/56150320
+function jsonMapReplacer(key, value) {
     if (value instanceof Map) {
-      return {
-        dataType: "Map",
-        value: Array.from(value.entries())
-      };
-    } else {
-      return value;
+        return {
+            dataType: "Map",
+            value: Array.from(value.entries()), // or with spread: value: [...value]
+        };
     }
-  }
-  function jsonMapReviver(key, value) {
+    else {
+        return value;
+    }
+}
+exports.jsonMapReplacer = jsonMapReplacer;
+// How do you JSON.stringify an ES6 Map?
+// https://stackoverflow.com/a/56150320
+function jsonMapReviver(key, value) {
     console.log("reviving", key, typeof value, value);
     if (typeof value === "object" && value !== null) {
-      if (value.dataType === "Map") {
-        return new Map(value.value);
-      }
+        if (value.dataType === "Map") {
+            return new Map(value.value);
+        }
     }
     return value;
-  }
-  function decodeHTML(text) {
+}
+exports.jsonMapReviver = jsonMapReviver;
+// HTML Decode JSON for Select Option element
+// https://tertiumnon.medium.com/js-how-to-decode-html-entities-8ea807a140e5
+// export function decodeHTML(text) {
+//     return $("<textarea/>")
+//       .html(text)
+//       .text();
+// }
+function decodeHTML(text) {
     let parser = new DOMParser();
-    let dom = parser.parseFromString(
-      `<!doctype html><body>${text}`,
-      "text/html"
-    );
+    let dom = parser.parseFromString(`<!doctype html><body>${text}`, "text/html");
     return dom.body.textContent || "";
-  }
-  function encodeHTML(text) {
+}
+exports.decodeHTML = decodeHTML;
+// https://tertiumnon.medium.com/js-how-to-decode-html-entities-8ea807a140e5
+// export function encodeHTML(text) {
+//     return $("<textarea/>")
+//       .text(text)
+//       .html();
+// }
+function encodeHTML(text) {
     let div = document.createElement("div");
     div.appendChild(document.createTextNode(text));
     return div.innerHTML;
-  }
-  function between(value, a, b, inclusive) {
+}
+exports.encodeHTML = encodeHTML;
+// How to check if a number is between two values?
+// https://stackoverflow.com/a/18881828
+// Number.prototype.between = function (a, b, inclusive) {
+//     var min = Math.min(a, b),
+//         max = Math.max(a, b);
+//     return inclusive ? this >= min && this <= max : this > min && this < max;
+// }
+function between(value, a, b, inclusive) {
     let min = Math.min(a, b);
     let max = Math.max(a, b);
     return inclusive ? value >= min && value <= max : value > min && value < max;
-  }
-  function outerHTML(element) {
+}
+exports.between = between;
+// Handy outerHTML extension function
+// jQuery.fn.outerHTML = function () {
+//     return jQuery('<div />').append(this.eq(0).clone()).html();
+// };
+function outerHTML(element) {
     return element.outerHTML;
-  }
-  function isMobile() {
+}
+exports.outerHTML = outerHTML;
+// Mobile detection
+// https://stackoverflow.com/questions/11381673/detecting-a-mobile-browser
+// window.mobileCheck = function () {
+function isMobile() {
     let check = false;
-    (function(a) {
-      if (/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(a) || /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0, 4)))
-        check = true;
+    (function (a) {
+        if (/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(a) ||
+            /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0, 4)))
+            check = true;
     })(navigator.userAgent || navigator.vendor || window["opera"]);
     return check;
-  }
-  function executeFunctionByName(functionName, context) {
+}
+exports.isMobile = isMobile;
+// How to execute a JavaScript function when I have its name as a string
+// https://stackoverflow.com/a/359910
+function executeFunctionByName(functionName, context /*, args */) {
     var args = Array.prototype.slice.call(arguments, 2);
     var namespaces = functionName.split(".");
     var func = namespaces.pop();
     for (var i = 0; i < namespaces.length; i++) {
-      context = context[namespaces[i]];
+        context = context[namespaces[i]];
     }
     return context[func].apply(context, args);
-  }
-  function executeFunctionByName2(functionName, context) {
+}
+exports.executeFunctionByName = executeFunctionByName;
+// How to execute a JavaScript function when I have its name as a string
+// https://stackoverflow.com/a/4351575
+function executeFunctionByName2(functionName, context /*, args */) {
     var args = Array.prototype.slice.call(arguments, 2);
     var namespaces = functionName.split(".");
     var func = namespaces.pop();
     for (var i = 0; i < namespaces.length; i++) {
-      context = context[namespaces[i]];
+        context = context[namespaces[i]];
     }
     return context[func].apply(context, args);
-  }
-  function shuffleElements(elements) {
+}
+exports.executeFunctionByName2 = executeFunctionByName2;
+//#region Shuffle
+// Shuffles a group of elements in the DOM
+// and also returns a set
+function shuffleElements(elements) {
     const allElems = Array.from(elements);
     const getRandom = (max) => Math.floor(Math.random() * max);
     const shuffled = allElems.map(() => {
-      const random = getRandom(allElems.length);
-      const randEl = allElems[random].cloneNode(true);
-      allElems.splice(random, 1);
-      return randEl;
+        const random = getRandom(allElems.length);
+        const randEl = allElems[random].cloneNode(true);
+        allElems.splice(random, 1);
+        return randEl;
     });
     allElems.forEach((elem, i) => {
-      if (elem.parentNode) {
-        elem.parentNode.replaceChild(shuffled[i], elem);
-      }
+        if (elem.parentNode) {
+            elem.parentNode.replaceChild(shuffled[i], elem);
+        }
     });
     return shuffled;
-  }
-  function autosizeIFrames() {
+}
+exports.shuffleElements = shuffleElements;
+// Usage:
+// const elements = document.querySelectorAll('.some-class');
+// const shuffledElements = shuffleElements(Array.from(elements));
+//#endregion
+/* previous code
+
+// Credit James Padolsey
+// https://css-tricks.com/snippets/jquery/shuffle-dom-elements/
+(function($){
+ 
+    $.fn.shuffle = function() {
+ 
+        var allElems = this.get(),
+            getRandom = function(max) {
+                return Math.floor(Math.random() * max);
+            },
+            shuffled = $.map(allElems, function(){
+                var random = getRandom(allElems.length),
+                    randEl = $(allElems[random]).clone(true)[0];
+                allElems.splice(random, 1);
+                return randEl;
+           });
+ 
+        this.each(function(i){
+            $(this).replaceWith($(shuffled[i]));
+        });
+ 
+        return $(shuffled);
+ 
+    };
+ 
+})(jQuery);
+*/
+//#region IFRAMES
+function autosizeIFrames() {
+    // Identify all IFRAMES with autosize tag
     const iframes = Array.from(
-      document.querySelectorAll("iframe[wfu='html.iframe.autofit']")
-    );
+    // BUG: weird tagging
+    document.querySelectorAll("iframe[wfu='html.iframe.autofit']"));
     iframes.forEach((iframe) => {
-      iframe.addEventListener("load", () => {
-        setInterval(() => {
-          if (iframe.contentDocument) {
-            iframe.style.height = `${iframe.contentDocument.body.scrollHeight}px`;
-          }
-        }, 200);
-      });
+        // Add event listener and wait for content to load
+        iframe.addEventListener("load", () => {
+            setInterval(() => {
+                if (iframe.contentDocument) {
+                    iframe.style.height = `${iframe.contentDocument.body.scrollHeight}px`;
+                }
+            }, 200);
+        });
     });
-  }
-  function applyDynamicAttributes() {
-    const dynamicAttributeDatas = Array.from(
-      document.querySelectorAll("data[wfu-attr]")
-    );
+}
+exports.autosizeIFrames = autosizeIFrames;
+/* prev
+
+export var autosizeIFrames = function () {
+
+    // Identify all IFRAMES with autosize tag
+    let iframes = $("iframe[wfu='html.iframe.autofit']");
+
+    iframes.each(function (index) {
+
+        var iframe = this;
+
+        // Add event listener and wait for content to load
+        this.addEventListener('load', function () {
+            setInterval(function () {
+                iframe.style.height = iframe.contentDocument.body.scrollHeight + 'px';
+            }, 200);
+        });
+
+    });
+
+}
+
+*/
+//#endregion
+//#region Dynamic Attributes
+// Applies custom attributes to HTML elements throughout the page
+// from relatively-positioned <data> elements.
+function applyDynamicAttributes() {
+    // Find all <data> elements which specify a data-source for data binding
+    const dynamicAttributeDatas = Array.from(document.querySelectorAll("data[wfu-attr]"));
+    // Iterate and bind each individually
     dynamicAttributeDatas.forEach((data) => {
-      const dataContainer = data.parentElement;
-      if (dataContainer) {
-        dataContainer.style.display = "none";
-      }
-      let target = null;
-      switch (data.getAttribute("wfu-attr-target")) {
-        case "prev":
-          target = dataContainer?.previousElementSibling;
-          break;
-        case "next":
-          target = dataContainer?.nextElementSibling;
-          break;
-        case "parent":
-          target = dataContainer?.parentElement;
-          break;
-        default:
-          console.warn("Unknown apply setting for param.");
-      }
-      if (target) {
-        target.setAttribute(data.getAttribute("wfu-attr") || "", data.getAttribute("wfu-attr-val") || "");
-      }
+        // Webflow wraps EMBEDS in a DIV, so we work from that parent as a positional reference
+        const dataContainer = data.parentElement;
+        // hide this node
+        if (dataContainer) {
+            dataContainer.style.display = "none";
+        }
+        let target = null;
+        // Webflow wraps EMBEDS in a DIV[wf-embed], so we work from that parent as a reference
+        switch (data.getAttribute("wfu-attr-target")) {
+            case "prev":
+                target = dataContainer?.previousElementSibling;
+                break;
+            case "next":
+                target = dataContainer?.nextElementSibling;
+                break;
+            case "parent":
+                target = dataContainer?.parentElement;
+                break;
+            default:
+                console.warn("Unknown apply setting for param.");
+        }
+        // Apply attribute
+        if (target) {
+            target.setAttribute(data.getAttribute("wfu-attr") || "", data.getAttribute("wfu-attr-val") || "");
+        }
     });
-  }
-  var formatJson = (data) => {
+}
+exports.applyDynamicAttributes = applyDynamicAttributes;
+/*
+
+
+export var applyDynamicAttributes = function () {
+
+    // Find all <data> elements which specify a data-source
+    // for data binding
+    var dynamicAttributeDatas = $('data[wfu-attr]');
+
+    // Iterate and bind each individually
+    $.each(dynamicAttributeDatas, function (i, elem) {
+
+        var data = this;
+
+        // Webflow wraps EMBEDS in a DIV, so we work from that parent as a positional reference
+        var dataContainer = $(data).parent();
+
+        // hide this node
+        $(dataContainer).attr("style", "display: none;");
+
+        var target = null;
+
+        // Webflow wraps EMBEDS in a DIV[wf-embed], so we work from that parent as a reference
+        switch ($(data).attr("wfu-attr-target")) {
+            case "prev":
+                target = $(dataContainer).prev();
+                break;
+            case "next":
+                target = $(dataContainer).next();
+                break;
+            case "parent":
+                target = $(dataContainer).parent();
+                break;
+            default:
+
+                if (vars.logging)
+                    console.warn("Unknown apply setting for param.");
+        }
+
+        // Apply attribute
+        var dataItem = this;
+        $(target).attr(
+            $(dataItem).attr("wfu-attr"),
+            $(dataItem).attr("wfu-attr-val")
+        );
+
+    });
+
+}
+
+*/
+//#endregion
+//#region Data Formatting
+const formatJson = (data) => {
     let json;
+    // Convert JSON to string
     if (typeof data !== "string") {
-      json = JSON.stringify(data, void 0, 2);
+        json = JSON.stringify(data, undefined, 2);
     }
     return json;
-  };
-  var formatJsonAsHtml = (data) => {
-    let json = formatJson(data);
-    json = json?.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    return json?.replace(
-      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
-      (match) => {
+};
+exports.formatJson = formatJson;
+const formatJsonAsHtml = (data) => {
+    // Convert JSON to string
+    let json = (0, exports.formatJson)(data);
+    json = json
+        ?.replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    // Add JSON styling classes
+    return (json?.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
         let cls = "wfu-json-number";
         if (/^"/.test(match)) {
-          if (/:$/.test(match)) {
-            cls = "wfu-json-key";
-          } else {
-            cls = "wfu-json-string";
-          }
-        } else if (/true|false/.test(match)) {
-          cls = "wfu-json-boolean";
-        } else if (/null/.test(match)) {
-          cls = "wfu-json-null";
+            if (/:$/.test(match)) {
+                cls = "wfu-json-key";
+            }
+            else {
+                cls = "wfu-json-string";
+            }
+        }
+        else if (/true|false/.test(match)) {
+            cls = "wfu-json-boolean";
+        }
+        else if (/null/.test(match)) {
+            cls = "wfu-json-null";
         }
         return `<span class="${cls}">${match}</span>`;
-      }
-    ) || "";
-  };
-  var displayDataAsHtml = (el, data) => {
+    }) || "");
+};
+exports.formatJsonAsHtml = formatJsonAsHtml;
+const displayDataAsHtml = (el, data) => {
+    // Create <pre> element
     const pre = document.createElement("pre");
     pre.className = "wfu-code";
-    pre.innerHTML = formatJsonAsHtml(data);
+    // Populate <pre> element with formatted JSON data
+    pre.innerHTML = (0, exports.formatJsonAsHtml)(data);
+    // Append <pre> element to the target element
     el.innerHTML = "";
     el.appendChild(pre);
-  };
-  function expandMacrosInElement(el, dict) {
-    let html = el.innerHTML;
-    html = expandMacrosInText(html, dict);
-    el.innerHTML = html;
-  }
-  var expandMacrosInText = (text, dict) => {
-    const replacer = (match, p1, p2, p3, offset, string) => {
-      return dict.get(p2) || "";
-    };
-    text = text.replace(
-      /{\s*(?<cmd>\w*)\s*\{\s*(?<params>\w*)\s*\}\s*(?<options>\w*)\s*\}/g,
-      replacer
+};
+exports.displayDataAsHtml = displayDataAsHtml;
+/*
+
+export var formatJson = function (data) {
+
+    var json;
+
+    // Convert JSON to string
+    if (typeof data != 'string') {
+        json = JSON.stringify(data, undefined, 2);
+    }
+
+    return json;
+}
+
+export var formatJsonAsHtml = function (data) {
+
+    // Convert JSON to string
+    var json = formatJson(data);
+
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // Add JSON styling classes
+    return json.replace(
+        /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+        function (match) {
+            var cls = 'wfu-json-number';
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'wfu-json-key';
+                } else {
+                    cls = 'wfu-json-string';
+                }
+            } else if (/true|false/.test(match)) {
+                cls = 'wfu-json-boolean';
+            } else if (/null/.test(match)) {
+                cls = 'wfu-json-null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
+        });
+
+}
+
+export var displayDataAsHtml = function (el, data) {
+
+//    var json = formatJson(data);
+
+    // Create <pre> element
+    $(el).html("<pre class='wfu-code'></pre>");
+
+    // Populate <pre> element with formatted JSON data
+    $(el).children("pre").html(
+        formatJsonAsHtml(data)
     );
+
+}
+
+*/
+//#endregion
+//#region Macros
+/* expandMacrosInElement
+ * Expands {{ var }} constructs in an elements innerHtml
+ * using dictionary lookup, and replaces the element content.
+ */
+function expandMacrosInElement(el, dict) {
+    let html = el.innerHTML;
+    html = (0, exports.expandMacrosInText)(html, dict);
+    el.innerHTML = html;
+}
+exports.expandMacrosInElement = expandMacrosInElement;
+/* expandMacrosInText
+ * Expands {{ var }} constructs in text
+ */
+const expandMacrosInText = (text, dict) => {
+    // Must be positioned before regex replace call
+    const replacer = (match, p1, p2, p3, offset, string) => {
+        return dict.get(p2) || "";
+    };
+    text = text.replace(/{\s*(?<cmd>\w*)\s*\{\s*(?<params>\w*)\s*\}\s*(?<options>\w*)\s*\}/g, replacer);
     return text;
-  };
-  function sequence(groupElement) {
+};
+exports.expandMacrosInText = expandMacrosInText;
+/*
+
+export var expandMacrosInElement = function (el, dict) {
+
+    var html = $(el).html();
+
+    html = expandMacrosInText(html, dict);
+
+    $(el).html(
+        html
+    );
+
+}
+
+
+export var expandMacrosInText = function (text, dict) {
+
+
+
+    // https://regexr.com/
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#specifying_a_string_as_a_parameter
+    // Must be positioned before regex replace call
+    var replacer = function (match, p1, p2, p3, offset, string) {
+
+        return dict.get(p2);
+    }
+
+    text = text.replace(
+        /{\s*(?<cmd>\w*)\s*\{\s*(?<params>\w*)\s*\}\s*(?<options>\w*)\s*\}/g,
+        replacer
+    );
+
+    return text;
+}
+
+*/
+//#endregion
+/**
+ * Sequence a group of items
+ * @param groupElement
+ */
+function sequence(groupElement) {
+    // Get the group name
     const groupName = groupElement.getAttribute("wfu-seq-group");
     console.log("sequence group", groupName);
+    // Find matching items
     let i = 0;
     const elements = groupElement.querySelectorAll(`[wfu-seq="${groupName}"]`);
     elements.forEach((element) => {
-      element.innerHTML = (++i).toString();
+        element.innerHTML = (++i).toString();
     });
-  }
-  function shuffleArray(array) {
+}
+exports.sequence = sequence;
+/*
+
+export var sequence = function (l) {
+
+    const $group = $(l);
+    
+    // Get the group name
+    const groupName = $group.attr("wfu-seq-group");
+
+    // Find matching items
+    var i = 0;
+    $group.find(`[wfu-seq="${groupName}"]`).each(function() {
+        $(this).html(++i);
+    });
+
+}
+
+*/
+/**
+ * Shuffle array randomly
+ * Fisher-Yates (also known as Knuth) shuffle
+ * iterates over the array from the last element to the first, randomly choosing an element in the unshuffled portion of the array and swapping it with the current element. This provides a uniform distribution of array permutations.
+ * @param array
+ * @returns
+ */
+function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
-  }
-})();
+}
+exports.shuffleArray = shuffleArray;
+function encodeDataBTOA(str) {
+    const encoder = new TextEncoder();
+    // 1: split the UTF-16 string into an array of bytes
+    const charCodes = encoder.encode(str);
+    // 2: concatenate byte data to create a binary string
+    return btoa(String.fromCharCode(...charCodes));
+}
+exports.encodeDataBTOA = encodeDataBTOA;
+function encodedDataATOB(str) {
+    return decodeURIComponent(escape(atob(str)));
+}
+exports.encodedDataATOB = encodedDataATOB;
 //# sourceMappingURL=utils.js.map
