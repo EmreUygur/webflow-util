@@ -1,9 +1,10 @@
+
 /*
  * webflow-ui
- *
+ * 
  * Sygnal Technology Group
  * http://sygnal.com
- *
+ * 
  * UI Utilities
  */
 
@@ -12,19 +13,20 @@ import { Sa5Attribute } from "./globals";
 // import { renderRatingComponent } from "./modules/webflow-ui";
 
 export class Sa5Rating {
+
   private _element: HTMLElement;
   private _rating: Number;
+
 
   set rating(rating: Number) {
     this._rating = rating;
     this._element.setAttribute(
-      Sa5Attribute.ATTR_RATING, // "wfu-rating"
-      this._rating.toString()
-    );
-    this.render();
+      Sa5Attribute.ATTR_RATING, // "wfu-rating" 
+      this._rating.toString());
+    this.render(); 
   }
   get rating(): Number {
-    return this._rating;
+    return this._rating; 
   }
 
   // Sets the value of a Rating element and refreshes it
@@ -36,24 +38,25 @@ export class Sa5Rating {
   // }
 
   constructor(element: HTMLElement) {
+
     this._element = element;
-    this._rating = Number(
-      element.getAttribute(
-        Sa5Attribute.ATTR_RATING // "wfu-rating"
-      )
-    );
+    this._rating = Number(element.getAttribute(
+      Sa5Attribute.ATTR_RATING // "wfu-rating"
+      )); 
+
   }
 
   init() {
+
     this.render();
+
   }
 
   private render() {
-    let ratingValue: number = Number(
-      this._element.getAttribute(
-        Sa5Attribute.ATTR_RATING // "wfu-rating"
-      )
-    );
+
+    let ratingValue: number = Number(this._element.getAttribute(
+      Sa5Attribute.ATTR_RATING // "wfu-rating"
+      ));
     let exclusionMaskPercent = (100.0 * (5.0 - ratingValue)) / 5.0;
 
     // Portions copyright (c) 2022 by Chris Coyier  (https://codepen.io/chriscoyier/pen/poWvyXQ)
@@ -75,5 +78,8 @@ export class Sa5Rating {
           <div class="wfu-rating-stars-cover" style="width: ${exclusionMaskPercent}%;"></div>
         </div>
       `;
+
   }
+
+
 }
