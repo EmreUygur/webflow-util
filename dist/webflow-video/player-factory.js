@@ -811,11 +811,19 @@
     return !isNaN(parseFloat(value)) && isFinite(value) && Math.floor(value) == value;
   }
   function isVimeoUrl(url) {
-    return /^(https?:)?\/\/((player|www)\.)?vimeo\.com(?=$|\/)/.test(url);
+    return /^(https?:)?\/\/((((player|www)\.)?vimeo\.com)|((player\.)?[a-zA-Z0-9-]+\.videoji\.hk))(?=$|\/)/.test(url);
   }
   function isVimeoEmbed(url) {
-    var expr = /^https:\/\/player\.vimeo\.com\/video\/\d+/;
+    var expr = /^https:\/\/player\.((vimeo\.com)|([a-zA-Z0-9-]+\.videoji\.hk))\/video\/\d+/;
     return expr.test(url);
+  }
+  function getOembedDomain(url) {
+    var match = (url || "").match(/^(?:https?:)?(?:\/\/)?([^/?]+)/);
+    var domain = (match && match[1] || "").replace("player.", "");
+    if (domain.endsWith(".videoji.hk")) {
+      return domain;
+    }
+    return "vimeo.com";
   }
   function getVimeoUrl() {
     var oEmbedParameters2 = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : {};
@@ -1329,7 +1337,7 @@
       }
     });
   }
-  var oEmbedParameters = ["autopause", "autoplay", "background", "byline", "color", "colors", "controls", "dnt", "height", "id", "interactive_params", "keyboard", "loop", "maxheight", "maxwidth", "muted", "playsinline", "portrait", "responsive", "speed", "texttrack", "title", "transparent", "url", "width"];
+  var oEmbedParameters = ["airplay", "audio_tracks", "autopause", "autoplay", "background", "byline", "cc", "chapter_id", "chapters", "chromecast", "color", "colors", "controls", "dnt", "end_time", "fullscreen", "height", "id", "interactive_params", "keyboard", "loop", "maxheight", "maxwidth", "muted", "play_button_position", "playsinline", "portrait", "progress_bar", "quality_selector", "responsive", "speed", "start_time", "texttrack", "title", "transcript", "transparent", "url", "vimeo_logo", "volume", "watch_full_video", "width"];
   function getOEmbedParameters(element) {
     var defaults = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
     return oEmbedParameters.reduce(function(params, param) {
@@ -1361,7 +1369,8 @@
       if (!isVimeoUrl(videoUrl)) {
         throw new TypeError("\u201C".concat(videoUrl, "\u201D is not a vimeo.com url."));
       }
-      var url = "https://vimeo.com/api/oembed.json?url=".concat(encodeURIComponent(videoUrl));
+      var domain = getOembedDomain(videoUrl);
+      var url = "https://".concat(domain, "/api/oembed.json?url=").concat(encodeURIComponent(videoUrl));
       for (var param in params) {
         if (params.hasOwnProperty(param)) {
           url += "&".concat(param, "=").concat(encodeURIComponent(params[param]));
@@ -2588,7 +2597,7 @@
  * Copyright (c) 2015-2021 polygonplanet <polygon.planet.aqua@gmail.com>
  * @license MIT
  */
-/*! @vimeo/player v2.20.1 | (c) 2023 Vimeo | MIT License | https://github.com/vimeo/player.js */
+/*! @vimeo/player v2.23.0 | (c) 2024 Vimeo | MIT License | https://github.com/vimeo/player.js */
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
     MIT License: http://getify.mit-license.org

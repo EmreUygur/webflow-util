@@ -583,6 +583,14 @@
       return word.charAt(0).toUpperCase() + word.slice(1);
     }).join(" ");
   }
+  function encodeDataBTOA(str) {
+    const encoder2 = new TextEncoder();
+    const charCodes = encoder2.encode(str);
+    return btoa(String.fromCharCode(...charCodes));
+  }
+  function encodedDataATOB(str) {
+    return decodeURIComponent(escape(atob(str)));
+  }
 
   // src/webflow-crypto.ts
   var PRIME64_1 = 11400714785074694791n;
@@ -922,7 +930,7 @@
         form.addEventListener("submit", (e) => {
           let emailInput = form.querySelector("#wf-log-in-email");
           let userEmail = emailInput.value;
-          let userKey = btoa(userEmail);
+          let userKey = encodeDataBTOA(userEmail);
           localStorage.setItem("StorageKeys.userKey", userKey);
         });
       });
@@ -972,7 +980,7 @@
       var userKey;
       const userKeyEncoded = localStorage.getItem(StorageKeys.userKey);
       if (userKeyEncoded) {
-        return atob(userKeyEncoded);
+        return encodedDataATOB(userKeyEncoded);
       }
     }
     async loadUserInfoAsync() {
@@ -1174,7 +1182,7 @@
       this.debug.debug("merged", userData);
       sessionStorage.setItem(
         StorageKeys.user,
-        btoa(JSON.stringify(userData))
+        encodeDataBTOA(JSON.stringify(userData))
       );
       if (this.config.dataBind) {
         this.debug.debug("databinding", userData);
@@ -1205,7 +1213,7 @@
       this.debug.debug("getting user.");
       const user = new Sa5User();
       user.fromJSON(
-        JSON.parse(atob(userInfo))
+        JSON.parse(encodedDataATOB(userInfo))
       );
       this.debug.groupEnd();
       return user;

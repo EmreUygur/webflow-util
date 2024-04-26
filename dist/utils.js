@@ -257,5 +257,13 @@
     }
     return array;
   }
+  function encodeDataBTOA(str) {
+    const encoder = new TextEncoder();
+    const charCodes = encoder.encode(str);
+    return btoa(String.fromCharCode(...charCodes));
+  }
+  function encodedDataATOB(str) {
+    return decodeURIComponent(escape(atob(str)));
+  }
 })();
 //# sourceMappingURL=utils.js.map
